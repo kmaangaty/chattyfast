@@ -152,16 +152,33 @@ def home(request):
     return render(request, 'home.html')
 
 
-
 def get_user_chat_rooms(request):
+    """
+    Retrieves and returns a list of chat rooms for the currently authenticated user.
+
+    This view fetches the chat rooms where the current user is either user1 or user2.
+    It also retrieves the most recent message for each chat room.
+
+    Args:
+        request (HttpRequest): The request object containing user session information.
+
+    Returns:
+        JsonResponse: A JSON response containing the list of chat rooms with their details.
+    """
+    # Retrieve the user from the database based on the session token
     user = User.objects.get(token=request.session['token'][0])
+
+    # Query to find chat rooms where the user is either user1 or user2
     chat_rooms = ChatRoom.objects.filter(
         Q(user1=user.user_name) | Q(user2=user.user_name)
     ).prefetch_related('message_set').distinct()
 
     chat_room_data = []
     for room in chat_rooms:
+        # Retrieve the last message in the chat room
         last_message = room.message_set.last()
+
+        # Prepare chat room data including last message details
         chat_room_data.append({
             'id': room.id,
             'user_name': room.user2 if room.user1 == user.user_name else room.user1,
@@ -169,6 +186,7 @@ def get_user_chat_rooms(request):
             'last_message_time': last_message.timestamp.strftime('%H:%M') if last_message else ''
         })
 
+    # Return the chat room data as a JSON response
     return JsonResponse({'chat_rooms': chat_room_data})
 
 
