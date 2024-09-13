@@ -224,12 +224,34 @@ def get_or_create_room(user1, user2):
     return chat_room
 
 
-
 @login_required
 def chat_room(request, user_id):
+    """
+    Renders the chat room page for a conversation between the logged-in user and another user.
+
+    This view retrieves or creates a chat room between the logged-in user and the specified user.
+    It also fetches all messages within the chat room and orders them by their timestamp.
+
+    Args:
+        request (HttpRequest): The request object containing user session information.
+        user_id (int): The ID of the user with whom the logged-in user is chatting.
+
+    Returns:
+        HttpResponse: The response object that renders the 'index.html' template with chat room details.
+
+    Raises:
+        Http404: If the specified user with `user_id` does not exist.
+    """
+    # Retrieve the user specified by `user_id`, or return a 404 error if not found
     user = get_object_or_404(User, id=user_id)
+
+    # Retrieve or create the chat room between the logged-in user and the specified user
     chat_room = get_or_create_room(request.user, user)
+
+    # Fetch all messages in the chat room and order them by timestamp
     messages = Message.objects.filter(room=chat_room).order_by('timestamp')
+
+    # Render the chat room page with the chat room ID, the specified user, and messages
     return render(request, 'index.html', {
         'room_name': chat_room.id,
         'user': user,
