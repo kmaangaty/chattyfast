@@ -8,6 +8,8 @@ from .models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import ChatRoom, Message
+from django.shortcuts import render, redirect
+from .models import User
 
 
 def index(request):
@@ -51,35 +53,77 @@ def index(request):
 
 
 def login(request):
+    """
+    Handles user login and registration.
+
+    If the request method is POST, this view will:
+    - Attempt to log the user in if 'method' is 'log'.
+    - Attempt to register a new user if 'method' is 'reg'.
+
+    On successful login:
+    - Sets a session token and updates the user's token in the database.
+    - Redirects to the home page.
+
+    On successful registration:
+    - Creates a new user with a unique token.
+    - Redirects to the home page.
+
+    On failure:
+    - Renders the login page with an appropriate error message.
+
+    Args:
+        request (HttpRequest): The request object containing user input.
+
+    Returns:
+        HttpResponse: The response object that either redirects or renders a page.
+    """
     if request.method == 'POST':
+        # Retrieve user inputs
         user_name = request.POST.get('user_name')
         password = request.POST.get('password')
         method = request.POST.get('method')
 
+        # Check if the user exists in the database
         try:
             user_data = User.objects.get(user_name=user_name)
             user_exist = True
         except User.DoesNotExist:
             user_exist = False
 
+        # Generate a new token
         token = create_token()
+
         if method == 'log':
+            # Attempt to log in the user
             if user_exist and password == user_data.password:
+                # Successful login: Set session token and update user token
                 request.session['token'] = [token]
                 user_data.token = token
                 user_data.save()
                 return redirect('/')
             else:
+                # Invalid login credentials: Render login page with error
                 return render(request, 'login.html', {'error': 'Invalid login credentials'})
+
         elif method == 'reg':
+            # Attempt to register a new user
             if not user_exist:
                 email = request.POST.get('email')
+                # Create new user with generated token
                 request.session['token'] = [create_token()]
-                user_data = User.objects.create(UID=create_token(), user_name=user_name, password=password, email=email, token=token)
+                User.objects.create(
+                    UID=create_token(),
+                    user_name=user_name,
+                    password=password,
+                    email=email,
+                    token=token
+                )
                 return redirect('/')
             else:
+                # User already exists: Render login page with error
                 return render(request, 'login.html', {'error': 'User already exists'})
 
+    # If request method is not POST, render the login page
     return render(request, 'login.html')
 
 
