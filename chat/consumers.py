@@ -17,12 +17,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         - Accepts the WebSocket connection.
         """
         # Extract room name from the URL route
+
         self.room_name = self.scope['url_route']['kwargs']['room_name']
 
         # Create a group name for the chat room
+
         self.room_group_name = f'chat_{self.room_name}'
 
         # Add the current channel (user) to the chat room group
+
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
