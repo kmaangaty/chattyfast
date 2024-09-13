@@ -4,49 +4,51 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Animated Login & Registration Form | Codehal</title>
+  <title>Animated Login & Registration Form</title>
   <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
 <body>
+  <!-- Container for the entire form -->
   <div class="wrapper">
+    <!-- Login form container -->
     <div class="form-wrapper sign-in">
       <form action="#" method="post">
           {% csrf_token %}
         <h2>Login</h2>
-          <input type="hidden" name="method" value="log">
+        <input type="hidden" name="method" value="log">
         <div class="input-group">
           <input id="user_name" name="user_name" type="text" required>
           <label for="user_name">Username</label>
         </div>
         <div class="input-group">
           <input name="password" type="password" required>
-          <label for="">Password</label>
+          <label for="password">Password</label>
         </div>
-
         <button type="submit">Login</button>
         <div class="signUp-link">
           <p>Don't have an account? <a href="#" class="signUpBtn-link">Sign Up</a></p>
         </div>
       </form>
     </div>
+
+    <!-- Sign Up form container -->
     <div class="form-wrapper sign-up">
      <form action="#" method="post">
           {% csrf_token %}
         <h2>Sign Up</h2>
-          <input type="hidden" name="method" value="reg">
+        <input type="hidden" name="method" value="reg">
         <div class="input-group">
           <input name="user_name" type="text" required>
-          <label for="">Username</label>
+          <label for="user_name">Username</label>
         </div>
         <div class="input-group">
           <input name="email" type="email" required>
-          <label for="">Email</label>
+          <label for="email">Email</label>
         </div>
         <div class="input-group">
           <input name="password" type="password" required>
-          <label for="">Password</label>
+          <label for="password">Password</label>
         </div>
-
         <button type="submit">Sign Up</button>
         <div class="signUp-link">
           <p>Already have an account? <a href="#" class="signInBtn-link">Sign In</a></p>
@@ -57,3 +59,4 @@
   <script src="/static/script.js"></script>
 </body>
 </html>
+
