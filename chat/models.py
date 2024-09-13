@@ -5,6 +5,7 @@ from django.db import models
 import string
 import secrets
 
+
 class User(models.Model):
     """
     Represents a user in the system.
