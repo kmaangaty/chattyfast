@@ -50,27 +50,47 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        room_id = text_data_json['room_id']
-        sender = text_data_json['sender']
+        """
+        Handles receiving messages via WebSocket.
 
+        This method is triggered when a message is received from a WebSocket connection.
+        It performs the following tasks:
+        1. Parses the incoming JSON data to extract the message, room ID, and sender.
+        2. Retrieves the chat room corresponding to the room ID.
+        3. Saves the received message in the database.
+        4. Broadcasts the message to all participants in the chat room.
+
+        Args:
+            text_data (str): The JSON-formatted message received from the WebSocket client.
+        """
+        # Parse the JSON data from the WebSocket message
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']  # Extract the message content
+        room_id = text_data_json['room_id']  # Extract the room ID
+        sender = text_data_json['sender']    # Extract the sender's username
+
+        # Retrieve the chat room object asynchronously using its ID
         room = await self.get_room(room_id)
+
+        # Debugging: Print the received message details (optional, for development)
         print({
             'message': message,
             'sender': sender,
             'room': room,
             'room_id': room_id,
         })
+
+        # Save the message to the database (message storage logic needs to be implemented in save_message)
         await self.save_message(room, sender, message)
 
+        # Broadcast the message to all members of the chat room group
         await self.channel_layer.group_send(
-            self.room_group_name,
+            self.room_group_name,  # The name of the group for the chat room
             {
-                'type': 'chat_message',
-                'message': message,
-                'sender': sender,
-                'timestamp': str(datetime.now())
+                'type': 'chat_message',  # Event type for handling the chat message
+                'message': message,      # The content of the message
+                'sender': sender,        # The sender's username
+                'timestamp': str(datetime.now())  # Timestamp of when the message was sent
             }
         )
 
