@@ -52,13 +52,6 @@ class ChatRoom(models.Model):
     user2 = models.TextField(default='0')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        """
-        String representation of the ChatRoom instance.
-        Returns the user names of the participants and the room's creation time.
-        """
-        return f"ChatRoom between {self.user1} and {self.user2} created on {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
-
 
 class Message(models.Model):
     """
