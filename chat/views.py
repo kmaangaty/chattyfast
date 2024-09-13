@@ -11,17 +11,42 @@ from .models import ChatRoom, Message
 
 
 def index(request):
+    """
+    Handles the request for the main index page.
+
+    - Checks if the user has an active session with a valid token.
+    - If not, redirects the user to the login page.
+    - If a valid session exists, retrieves the user based on the session token and renders the index page.
+
+    Args:
+        request: The HTTP request object containing metadata about the request.
+
+    Returns:
+        - If the token is missing or invalid, the user is redirected to the login page.
+        - If the token is valid, the index page is rendered with user information.
+    """
+
+    # Check if the user has a session token; if not, redirect to login page
     if 'token' not in request.session:
         return redirect('/login')
+
+    # Get the token from the session
     token = request.session['token'][0]
+
     try:
+        # Try to retrieve the user associated with the token
         user = User.objects.get(token=token)
     except User.DoesNotExist:
+        # If the token is invalid or user does not exist, redirect to login page
         return redirect('/login')
+
+    # Prepare the context with user information to render the index page
     context = {
         'user_id': user.id,
         'user_name': user.user_name
     }
+
+    # Render the index page with the user's information
     return render(request, 'index.html', context)
 
 
