@@ -40,9 +40,25 @@ class User(models.Model):
 
 
 class ChatRoom(models.Model):
+    """
+    Represents a chat room between two users.
+
+    Attributes:
+        user1 (TextField): The username of the first participant.
+        user2 (TextField): The username of the second participant.
+        created_at (DateTimeField): The timestamp when the chat room was created. Automatically set when the room is created.
+    """
     user1 = models.TextField(default='0')
     user2 = models.TextField(default='0')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        """
+        String representation of the ChatRoom instance.
+        Returns the user names of the participants and the room's creation time.
+        """
+        return f"ChatRoom between {self.user1} and {self.user2} created on {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+
 
 
 class Message(models.Model):
