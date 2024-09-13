@@ -35,9 +35,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
+        """
+        Handles WebSocket disconnection.
+
+        - Removes the user from the chat room group when they disconnect.
+
+        Args:
+            close_code (int): The WebSocket close code indicating why the connection was closed.
+        """
+        # Remove the current channel from the chat room group
         await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
+            self.room_group_name,  # The group name for the chat room
+            self.channel_name  # The specific WebSocket connection/channel
         )
 
     async def receive(self, text_data):
