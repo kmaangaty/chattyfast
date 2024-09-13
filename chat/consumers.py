@@ -72,14 +72,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Retrieve the chat room object asynchronously using its ID
         room = await self.get_room(room_id)
 
-        # Debugging: Print the received message details (optional, for development)
-        print({
-            'message': message,
-            'sender': sender,
-            'room': room,
-            'room_id': room_id,
-        })
-
         # Save the message to the database (message storage logic needs to be implemented in save_message)
         await self.save_message(room, sender, message)
 
