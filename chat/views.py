@@ -137,7 +137,20 @@ def create_token():
 
 @login_required
 def home(request):
+    """
+    Renders the home page for logged-in users.
+
+    This view is protected by the `login_required` decorator,
+    which ensures that only authenticated users can access this page.
+
+    Args:
+        request (HttpRequest): The request object containing user information.
+
+    Returns:
+        HttpResponse: The response object that renders the 'home.html' template.
+    """
     return render(request, 'home.html')
+
 
 
 def get_user_chat_rooms(request):
