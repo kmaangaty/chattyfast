@@ -141,11 +141,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, room, sender, message):
+        """
+        Saves a new message to the database.
+
+        This method retrieves the user by their username (sender) and creates a new
+        message linked to the specified chat room. The message is saved to the `Message` model.
+
+        Args:
+            room (ChatRoom): The chat room where the message is being sent.
+            sender (str): The username of the sender of the message.
+            message (str): The text content of the message to be saved.
+
+        Returns:
+            None: If the sender does not exist or the message fails to save.
+        """
         from django.core.exceptions import ObjectDoesNotExist
+
+        # Attempt to retrieve the user by their username
         try:
             user = User.objects.get(user_name=sender)
         except ObjectDoesNotExist:
+            # If the user does not exist, return without saving the message
             return
 
+        # Create a new message instance and save it to the database
         new_message = Message(room=room, sender=user, text=message)
         new_message.save()
