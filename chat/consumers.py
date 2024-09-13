@@ -121,6 +121,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_room(self, room_id):
+        """
+        Retrieves the chat room from the database by its ID.
+
+        This method is decorated with `@database_sync_to_async` to ensure that
+        the database query runs asynchronously, preventing blocking of the event loop.
+
+        Args:
+            room_id (int): The ID of the chat room to be retrieved.
+
+        Returns:
+            ChatRoom: The chat room instance that matches the given room_id.
+
+        Raises:
+            ChatRoom.DoesNotExist: If no chat room with the provided ID is found.
+        """
+        # Query the database for the chat room with the given ID
         return ChatRoom.objects.get(id=room_id)
 
     @database_sync_to_async
