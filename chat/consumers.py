@@ -95,14 +95,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        message = event['message']
-        sender = event['sender']
-        timestamp = event['timestamp']
+        """
+        Handles broadcasting a message to the WebSocket client.
 
+        This method is triggered when a message is sent to the room group via `group_send`.
+        It sends the message to the WebSocket client that triggered this method.
+
+        Args:
+            event (dict): The event dictionary containing the following keys:
+                - 'message': The content of the message being broadcast.
+                - 'sender': The username of the sender.
+                - 'timestamp': The time the message was sent.
+        """
+        # Extract the message content, sender, and timestamp from the event
+        message = event['message']     # The message content to be sent
+        sender = event['sender']       # The username of the sender
+        timestamp = event['timestamp'] # The time when the message was sent
+
+        # Send the message to the WebSocket client in JSON format
         await self.send(text_data=json.dumps({
-            'message': message,
-            'sender': sender,
-            'timestamp': timestamp
+            'message': message,       # Include the message in the response
+            'sender': sender,         # Include the sender's username
+            'timestamp': timestamp    # Include the message's timestamp
         }))
 
     @database_sync_to_async
