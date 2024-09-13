@@ -191,6 +191,23 @@ def get_user_chat_rooms(request):
 
 
 def get_or_create_room(user1, user2):
+    """
+    Retrieves an existing chat room between two users or creates a new one if it does not exist.
+
+    This function ensures that the provided user instances are valid and have proper IDs.
+    It uses the `get_or_create` method to either fetch an existing chat room or create a new one.
+
+    Args:
+        user1 (User): The first user in the chat room.
+        user2 (User): The second user in the chat room.
+
+    Returns:
+        ChatRoom: The chat room instance between the two users.
+
+    Raises:
+        TypeError: If either `user1` or `user2` is not an instance of `User`.
+        ValueError: If either `user1` or `user2` has an invalid ID.
+    """
     if not (isinstance(user1, User) and isinstance(user2, User)):
         raise TypeError("Expected instances of User")
 
@@ -198,11 +215,14 @@ def get_or_create_room(user1, user2):
     if user1.id is None or user2.id is None:
         raise ValueError("One or both users have invalid IDs")
 
+    # Ensure user1 is always less than or equal to user2 by ID for consistent room creation
     chat_room, created = ChatRoom.objects.get_or_create(
         user1=min(user1, user2, key=lambda u: u.id),
         user2=max(user1, user2, key=lambda u: u.id)
     )
+
     return chat_room
+
 
 
 @login_required
