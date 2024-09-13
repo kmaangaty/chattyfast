@@ -340,9 +340,32 @@ def search_user(request):
 
 
 def get_room_messages(request, room_id):
+    """
+    Retrieves and returns all messages in a specific chat room.
+
+    This view handles GET requests to fetch all messages for a given chat room.
+    It orders the messages by their timestamp and returns them in a JSON response.
+
+    Args:
+        request (HttpRequest): The request object containing the room ID.
+        room_id (int): The ID of the chat room for which messages are to be fetched.
+
+    Returns:
+        JsonResponse: A JSON response containing a list of messages in the chat room.
+    """
     if request.method == 'GET':
+        # Retrieve the chat room with the given ID, or return a 404 error if not found
         cr = get_object_or_404(ChatRoom, id=room_id)
+
+        # Fetch all messages in the chat room and order them by timestamp
         messages = Message.objects.filter(room=cr).order_by('timestamp')
-        message_list = [{'sender': message.sender.user_name, 'content': message.text, 'timestamp': message.timestamp}
-                        for message in messages]
+
+        # Prepare a list of message details
+        message_list = [{
+            'sender': message.sender.user_name,
+            'content': message.text,
+            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')  # Format timestamp for readability
+        } for message in messages]
+
+        # Return the messages in a JSON response
         return JsonResponse({'messages': message_list})
