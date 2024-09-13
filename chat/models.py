@@ -60,8 +60,18 @@ class ChatRoom(models.Model):
         return f"ChatRoom between {self.user1} and {self.user2} created on {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
 
 
-
 class Message(models.Model):
+    """
+    Represents a message sent within a chat room.
+
+    Attributes:
+        room (ForeignKey): The chat room in which the message was sent.
+                           Links to the `ChatRoom` model.
+        sender (ForeignKey): The user who sent the message.
+                             Links to the `User` model.
+        text (TextField): The content of the message.
+        timestamp (DateTimeField): The time when the message was created. Automatically set when the message is created.
+    """
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField(default='0')
