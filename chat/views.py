@@ -260,15 +260,33 @@ def chat_room(request, user_id):
 
 
 def search_user(request):
-    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    """
+    Searches for a user by username and retrieves chat room details.
+
+    This view handles AJAX POST requests to search for a user by their username.
+    It checks if the user exists, retrieves or creates a chat room with the logged-in user,
+    and returns the user and chat room details in a JSON response.
+
+    Args:
+        request (HttpRequest): The request object containing search data.
+
+    Returns:
+        JsonResponse: A JSON response indicating success or failure, including user and chat room details if successful.
+    """
+    # Check if the request is an AJAX POST request
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = UserSearchForm(request.POST)
+
+        # Validate the form data
         if form.is_valid():
             username = form.cleaned_data['username']
+
             try:
+                # Retrieve the user with the given username
                 user = User.objects.get(user_name=username)
                 my_user = User.objects.get(token=request.session['token'][0])
 
-                # Check if a chat room exists between the users
+                # Check if a chat room exists between the current user and the found user
                 chat_room = ChatRoom.objects.filter(
                     (Q(user1=my_user.user_name) & Q(user2=user.user_name)) |
                     (Q(user1=user.user_name) & Q(user2=my_user.user_name))
@@ -281,12 +299,12 @@ def search_user(request):
                         user2=user.user_name
                     )
 
-                # Get the last message details
+                # Retrieve the last message in the chat room
                 last_message = Message.objects.filter(room=chat_room).last()
                 last_message_text = last_message.text if last_message else ''
                 last_message_time = last_message.timestamp.strftime('%H:%M') if last_message else ''
 
-                # Prepare user data
+                # Prepare user and chat room data
                 user_data = {
                     'id': user.id,
                     'name': user.name,
@@ -296,24 +314,28 @@ def search_user(request):
                     'chat_room_id': chat_room.id
                 }
 
-                # Prepare chat room data
                 chat_room_data = [{
                     'id': chat_room.id,
                     'user_name': user.user_name,
                     'last_message': last_message_text,
                     'last_message_time': last_message_time
                 }]
+
+                # Return success response with user and chat room data
                 return JsonResponse({
                     'success': True,
                     'user': user_data,
                     'chat_rooms': chat_room_data
                 })
             except User.DoesNotExist:
+                # Handle case where user does not exist
                 return JsonResponse({'success': False, 'error': f'{username} does not exist'})
             except Exception as e:
+                # Log unexpected errors and return error response
                 logging.error(f'Error in search_user: {e}')
                 return JsonResponse({'success': False, 'error': 'An unexpected error occurred'})
 
+    # Handle invalid requests
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 
