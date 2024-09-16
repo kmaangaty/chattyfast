@@ -1,4 +1,4 @@
-from chat.views import home, login
+from chat.views import login
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include

@@ -3,8 +3,9 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
+
+from crypto.crypt import encrypt, decrypt
 from .forms import UserSearchForm
-from .models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import ChatRoom, Message
@@ -27,28 +28,21 @@ def index(request):
         - If the token is missing or invalid, the user is redirected to the login page.
         - If the token is valid, the index page is rendered with user information.
     """
-
-    # Check if the user has a session token; if not, redirect to login page
     if 'token' not in request.session:
         return redirect('/login')
 
-    # Get the token from the session
     token = request.session['token'][0]
 
     try:
-        # Try to retrieve the user associated with the token
         user = User.objects.get(token=token)
     except User.DoesNotExist:
-        # If the token is invalid or user does not exist, redirect to login page
         return redirect('/login')
 
-    # Prepare the context with user information to render the index page
     context = {
         'user_id': user.id,
         'user_name': user.user_name
     }
 
-    # Render the index page with the user's information
     return render(request, 'index.html', context)
 
 
@@ -135,23 +129,6 @@ def create_token():
     return token
 
 
-@login_required
-def home(request):
-    """
-    Renders the home page for logged-in users.
-
-    This view is protected by the `login_required` decorator,
-    which ensures that only authenticated users can access this page.
-
-    Args:
-        request (HttpRequest): The request object containing user information.
-
-    Returns:
-        HttpResponse: The response object that renders the 'home.html' template.
-    """
-    return render(request, 'home.html')
-
-
 def get_user_chat_rooms(request):
     """
     Retrieves and returns a list of chat rooms for the currently authenticated user.
@@ -175,18 +152,14 @@ def get_user_chat_rooms(request):
 
     chat_room_data = []
     for room in chat_rooms:
-        # Retrieve the last message in the chat room
         last_message = room.message_set.last()
-
-        # Prepare chat room data including last message details
         chat_room_data.append({
             'id': room.id,
             'user_name': room.user2 if room.user1 == user.user_name else room.user1,
-            'last_message': last_message.text if last_message else '',
+            'last_message': decrypt(last_message.text) if last_message else '',
             'last_message_time': last_message.timestamp.strftime('%H:%M') if last_message else ''
         })
 
-    # Return the chat room data as a JSON response
     return JsonResponse({'chat_rooms': chat_room_data})
 
 
@@ -242,16 +215,9 @@ def chat_room(request, user_id):
     Raises:
         Http404: If the specified user with `user_id` does not exist.
     """
-    # Retrieve the user specified by `user_id`, or return a 404 error if not found
     user = get_object_or_404(User, id=user_id)
-
-    # Retrieve or create the chat room between the logged-in user and the specified user
     chat_room = get_or_create_room(request.user, user)
-
-    # Fetch all messages in the chat room and order them by timestamp
     messages = Message.objects.filter(room=chat_room).order_by('timestamp')
-
-    # Render the chat room page with the chat room ID, the specified user, and messages
     return render(request, 'index.html', {
         'room_name': chat_room.id,
         'user': user,
@@ -301,7 +267,7 @@ def search_user(request):
 
                 # Retrieve the last message in the chat room
                 last_message = Message.objects.filter(room=chat_room).last()
-                last_message_text = last_message.text if last_message else ''
+                last_message_text = decrypt(last_message.text) if last_message else ''
                 last_message_time = last_message.timestamp.strftime('%H:%M') if last_message else ''
 
                 # Prepare user and chat room data
@@ -354,17 +320,14 @@ def get_room_messages(request, room_id):
         JsonResponse: A JSON response containing a list of messages in the chat room.
     """
     if request.method == 'GET':
-        # Retrieve the chat room with the given ID, or return a 404 error if not found
         cr = get_object_or_404(ChatRoom, id=room_id)
 
-        # Fetch all messages in the chat room and order them by timestamp
         messages = Message.objects.filter(room=cr).order_by('timestamp')
 
-        # Prepare a list of message details
         message_list = [{
             'sender': message.sender.user_name,
-            'content': message.text,
-            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')  # Format timestamp for readability
+            'content': decrypt(message.text),
+            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         } for message in messages]
 
         # Return the messages in a JSON response

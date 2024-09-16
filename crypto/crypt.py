@@ -1,3 +1,4 @@
+import base64
 import os
 import rsa
 
@@ -26,7 +27,6 @@ def generate_keys():
 
     with open(f'{keys_dir}/privkey.pem', 'wb') as f:
         f.write(privKey.save_pkcs1('PEM'))
-
 
 def load_keys():
     """
@@ -87,4 +87,38 @@ def decrypt_rsa(ciphertext, key):
         return rsa.decrypt(ciphertext, key).decode('utf-8')
     except:
         return False
+
+
+def encrypt(msg):
+    """
+    Encrypts a message using RSA and encodes it in Base64.
+
+    Args:
+        msg (str): The plaintext message to be encrypted.
+
+    Returns:
+        str: The Base64-encoded encrypted message.
+    """
+    ciphertext = encrypt_rsa(msg, pubKey)
+    encoded = base64.b64encode(ciphertext)
+    return encoded.decode()
+
+
+def decrypt(message):
+    """
+    Decrypts a Base64-encoded RSA-encrypted message.
+
+    Args:
+        message (str): The Base64-encoded encrypted message.
+
+    Returns:
+        str: The decrypted plaintext message if successful, otherwise an error message.
+    """
+    message = base64.b64decode(message)
+    plaintext = decrypt_rsa(message, privKey)
+    if plaintext:
+        return plaintext
+    else:
+        return 'Could not decrypt the message.'
+
 
