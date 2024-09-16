@@ -3,6 +3,7 @@ import rsa
 
 # Get the current working directory of the script
 cwd = os.path.dirname(os.path.abspath(__file__))
+pubKey, privKey = load_keys()
 
 
 def generate_keys():
@@ -32,3 +33,29 @@ def generate_keys():
         f.write(privKey.save_pkcs1('PEM'))
 
 
+def load_keys():
+    """
+    Loads the RSA public and private keys from the 'keys' directory.
+
+    This function reads the public key from 'pubkey.pem' and the private key from
+    'privkey.pem' files in the 'keys' directory within the current working directory.
+    It returns both keys for use in encryption and decryption operations.
+
+    Returns:
+        tuple: A tuple containing the public key and private key as
+               (rsa.PublicKey, rsa.PrivateKey).
+
+    Raises:
+        FileNotFoundError: If the key files do not exist.
+        rsa.pkcs1.DecryptionError: If the keys are not in the correct format.
+    """
+    # Load the public key from 'pubkey.pem'
+    with open(f'{cwd}/keys/pubkey.pem', 'rb') as f:
+        pubKey = rsa.PublicKey.load_pkcs1(f.read())
+
+    # Load the private key from 'privkey.pem'
+    with open(f'{cwd}/keys/privkey.pem', 'rb') as f:
+        privKey = rsa.PrivateKey.load_pkcs1(f.read())
+
+    # Return the loaded keys
+    return pubKey, privKey
