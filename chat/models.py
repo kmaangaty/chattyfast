@@ -51,6 +51,7 @@ class ChatRoom(models.Model):
     """
     user1 = models.TextField(default='0')
     user2 = models.TextField(default='0')
+    encryption_key = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
 

@@ -52,6 +52,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
+        print(text_data)
         """
         Handles receiving messages via WebSocket.
 

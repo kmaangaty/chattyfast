@@ -2,14 +2,13 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.shortcuts import render, redirect
-
-from crypto.crypt import encrypt, decrypt
-from .forms import UserSearchForm
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from .models import ChatRoom, Message
 from django.shortcuts import render, redirect
+
+from crypto.crypt import decrypt
+from .forms import UserSearchForm
+from .models import ChatRoom, Message
 from .models import User
 
 
@@ -145,7 +144,8 @@ def get_user_chat_rooms(request):
             'id': room.id,
             'user_name': room.user2 if room.user1 == user.user_name else room.user1,
             'last_message': decrypt(last_message.text) if last_message else '',
-            'last_message_time': last_message.timestamp.strftime('%H:%M') if last_message else ''
+            'last_message_time': last_message.timestamp.strftime('%H:%M') if last_message else '',
+            'msh': ChatRoom.objects.get(id=room.id).encryption_key
         })
 
     return JsonResponse({'chat_rooms': chat_room_data})
@@ -241,9 +241,12 @@ def search_user(request):
                 ).first()
 
                 if not chat_room:
+                    import random
+                    shift_value = random.randint(1, 25)
                     chat_room = ChatRoom.objects.create(
                         user1=my_user.user_name,
-                        user2=user.user_name
+                        user2=user.user_name,
+                        encryption_key=shift_value
                     )
 
                 last_message = Message.objects.filter(room=chat_room).last()
@@ -305,4 +308,4 @@ def get_room_messages(request, room_id):
             'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         } for message in messages]
 
-        return JsonResponse({'messages': message_list})
+        return JsonResponse({'messages': message_list, 'key': cr.encryption_key})

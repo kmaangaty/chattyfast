@@ -10,10 +10,8 @@
 </head>
 <body>
 
-<!-- start: Chat -->
 <section class="chat-section">
     <div class="chat-container">
-        <!-- start: Sidebar -->
         <aside class="chat-sidebar">
             <a href="#" class="chat-sidebar-logo">
                 <i class="ri-chat-1-fill"></i>
@@ -30,11 +28,8 @@
                 </li>
             </ul>
         </aside>
-        <!-- end: Sidebar -->
 
-        <!-- start: Content -->
         <div class="chat-content">
-            <!-- start: Content side -->
             <div class="content-sidebar">
                 <div class="content-sidebar-title">Chats</div>
                 <form id="user-search-form" class="content-sidebar-form">
@@ -46,18 +41,14 @@
                 <div class="content-messages">
                     <ul class="content-messages-list" id="chat-room-list">
                         <li class="content-message-title"><span>Recently</span></li>
-                        <!-- Chat room list items will be inserted here -->
                     </ul>
                 </div>
             </div>
-            <!-- end: Content side -->
 
-            <!-- start: Conversation -->
             <div class="conversation conversation-default active">
                 <i class="ri-chat-3-line"></i>
                 <p>Select chat and view conversation!</p>
             </div>
-            <!-- Example chat rooms -->
             <div class="conversation" id="conversation">
                 <div class="conversation-top">
                     <button type="button" class="conversation-back"><i class="ri-arrow-left-line"></i></button>
@@ -76,7 +67,6 @@
                 <div class="conversation-main">
                     <ul class="conversation-wrapper" id="messages-list">
                         <div class="conversation-divider"><span>Today</span></div>
-                        <!-- Messages will be dynamically inserted here -->
                     </ul>
                 </div>
                 <div class="conversation-form">
@@ -85,83 +75,26 @@
                         <textarea class="conversation-form-input" rows="1" placeholder="Type here..."></textarea>
                         <button type="button" class="conversation-form-record"><i class="ri-mic-line"></i></button>
                     </div>
-                    <button type="button" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
+                    <button type="button" class="conversation-form-button conversation-form-submit"><i
+                            class="ri-send-plane-2-line"></i></button>
                 </div>
             </div>
-            <!-- Additional conversation divs as needed -->
         </div>
-        <!-- end: Content -->
     </div>
 </section>
-<!-- end: Chat -->
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('user-search-form');
-    const input = document.getElementById('user-search-input');
-    const resultsDiv = document.getElementById('search-results');
-    const chatRoomList = document.getElementById('chat-room-list');
-    let currentRoomId = null;
-    let chatSocket = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('user-search-form');
+        const input = document.getElementById('user-search-input');
+        const resultsDiv = document.getElementById('search-results');
+        const chatRoomList = document.getElementById('chat-room-list');
+        let currentRoomId = null;
+        let chatSocket = null;
 
-    // Fetch and display chat rooms on page load
-    fetch('{% url "chat:get_user_chat_rooms" %}')
-    .then(response => response.json())
-    .then(data => {
-        data.chat_rooms.forEach(room => {
-            const li = document.createElement('li');
-            li.classList.add('chat-row');
-            li.dataset.roomId = room.id;
-            const a = document.createElement('a');
-            a.dataset.conversationId = `conversation-${room.id}`;
-            const img = document.createElement('img');
-            img.classList.add('content-message-image');
-            img.src = "/static/images/df.jpg";
-            img.alt = "";
-            const spanInfo = document.createElement('span');
-            spanInfo.classList.add('content-message-info');
-            const spanName = document.createElement('span');
-            spanName.classList.add('content-message-name');
-            spanName.textContent = room.user_name;
-            const spanText = document.createElement('span');
-            spanText.classList.add('content-message-text');
-            spanText.textContent = room.last_message;
-            spanInfo.appendChild(spanName);
-            spanInfo.appendChild(spanText);
-            const spanMore = document.createElement('span');
-            spanMore.classList.add('content-message-more');
-            const spanTime = document.createElement('span');
-            spanTime.classList.add('content-message-time');
-            spanTime.textContent = room.last_message_time;
-            spanMore.appendChild(spanTime);
-            a.appendChild(img);
-            a.appendChild(spanInfo);
-            a.appendChild(spanMore);
-            li.appendChild(a);
-            chatRoomList.appendChild(li);
-        });
-    })
-    .catch(error => console.error('Error fetching chat rooms:', error));
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const formData = new FormData();
-        formData.append('username', input.value);
-
-        fetch('{% url "chat:search_user" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            resultsDiv.innerHTML = '';
-            if (data.success) {
-                const ul = document.createElement('ul');
-                ul.classList.add('content-messages-list');
+        fetch('{% url "chat:get_user_chat_rooms" %}')
+            .then(response => response.json())
+            .then(data => {
                 data.chat_rooms.forEach(room => {
                     const li = document.createElement('li');
                     li.classList.add('chat-row');
@@ -179,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     spanName.textContent = room.user_name;
                     const spanText = document.createElement('span');
                     spanText.classList.add('content-message-text');
-                    spanText.textContent = room.last_message;
+                    spanText.textContent = caesarDecrypt(room.last_message, room.msh);
                     spanInfo.appendChild(spanName);
                     spanInfo.appendChild(spanText);
                     const spanMore = document.createElement('span');
@@ -192,124 +125,186 @@ document.addEventListener('DOMContentLoaded', () => {
                     a.appendChild(spanInfo);
                     a.appendChild(spanMore);
                     li.appendChild(a);
-                    ul.appendChild(li);
+                    chatRoomList.appendChild(li);
                 });
-                resultsDiv.appendChild(ul);
-            } else {
-                resultsDiv.innerHTML = '<p>No users found.</p>';
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
+            })
+            .catch(error => console.error('Error fetching chat rooms:', error));
 
-    resultsDiv.addEventListener('click', (e) => {
-    const chatRow = e.target.closest('.chat-row');
-    if (chatRow) {
-        const roomId = chatRow.dataset.roomId;
-        const userName = chatRow.querySelector('.content-message-name').textContent;
-        openChatRoom(roomId, userName);
-    }
-});
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-    chatRoomList.addEventListener('click', (e) => {
-    console.log('Clicked element:', e.target); // Add this line to debug
-    const chatRow = e.target.closest('.chat-row');
-    if (chatRow) {
-        const roomId = chatRow.dataset.roomId;
-        const userName = chatRow.querySelector('.content-message-name').textContent;
-        openChatRoom(roomId, userName);
-    }
-});
+            const formData = new FormData();
+            formData.append('username', input.value);
 
-    function openChatRoom(roomId, userName) {
-        if (chatSocket) {
-            chatSocket.close();
-        }
-
-        document.querySelectorAll('.conversation').forEach(conversation => {
-            conversation.classList.remove('active');
+            fetch('{% url "chat:search_user" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    if (data.success) {
+                        const ul = document.createElement('ul');
+                        ul.classList.add('content-messages-list');
+                        data.chat_rooms.forEach(room => {
+                            const li = document.createElement('li');
+                            li.classList.add('chat-row');
+                            li.dataset.roomId = room.id;
+                            const a = document.createElement('a');
+                            a.dataset.conversationId = `conversation-${room.id}`;
+                            const img = document.createElement('img');
+                            img.classList.add('content-message-image');
+                            img.src = "/static/images/df.jpg";
+                            img.alt = "";
+                            const spanInfo = document.createElement('span');
+                            spanInfo.classList.add('content-message-info');
+                            const spanName = document.createElement('span');
+                            spanName.classList.add('content-message-name');
+                            spanName.textContent = room.user_name;
+                            const spanText = document.createElement('span');
+                            spanText.classList.add('content-message-text');
+                            spanText.textContent = room.last_message;
+                            spanInfo.appendChild(spanName);
+                            spanInfo.appendChild(spanText);
+                            const spanMore = document.createElement('span');
+                            spanMore.classList.add('content-message-more');
+                            const spanTime = document.createElement('span');
+                            spanTime.classList.add('content-message-time');
+                            spanTime.textContent = room.last_message_time;
+                            spanMore.appendChild(spanTime);
+                            a.appendChild(img);
+                            a.appendChild(spanInfo);
+                            a.appendChild(spanMore);
+                            li.appendChild(a);
+                            ul.appendChild(li);
+                        });
+                        resultsDiv.appendChild(ul);
+                    } else {
+                        resultsDiv.innerHTML = '<p>No users found.</p>';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         });
 
-        const conversation = document.getElementById('conversation');
-        if (conversation) {
-            conversation.classList.add('active');
-            currentRoomId = roomId;
+        resultsDiv.addEventListener('click', (e) => {
+            const chatRow = e.target.closest('.chat-row');
+            if (chatRow) {
+                const roomId = chatRow.dataset.roomId;
+                const userName = chatRow.querySelector('.content-message-name').textContent;
+                openChatRoom(roomId, userName);
+            }
+        });
 
-            const userNameElement = conversation.querySelector('.conversation-user-name');
-            userNameElement.textContent = userName;
+        chatRoomList.addEventListener('click', (e) => {
+            const chatRow = e.target.closest('.chat-row');
+            if (chatRow) {
+                const roomId = chatRow.dataset.roomId;
+                const userName = chatRow.querySelector('.content-message-name').textContent;
+                openChatRoom(roomId, userName);
+            }
+        });
 
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomId}/`);
+        function openChatRoom(roomId, userName) {
+            if (chatSocket) {
+                chatSocket.close();
+            }
 
-            chatSocket.onopen = () => {
-                console.log("WebSocket connection established.");
-            };
+            document.querySelectorAll('.conversation').forEach(conversation => {
+                conversation.classList.remove('active');
+            });
 
-            chatSocket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                const isSender = data.sender === "{{ user_name }}";
-                displayMessage(roomId, data.message, isSender, data.timestamp);
-            };
+            const conversation = document.getElementById('conversation');
+            if (conversation) {
+                conversation.classList.add('active');
+                currentRoomId = roomId;
 
-            chatSocket.onclose = (e) => {
-                console.error("Chat socket closed unexpectedly", e);
-            };
+                // Fetch the chat room details including the encryption key
+                fetch(`/chat/get_room_messages/${roomId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const caesarShift = data.key; // Use the retrieved key
 
-            chatSocket.onerror = (e) => {
-                console.error("WebSocket error:", e);
-            };
+                        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                        chatSocket = new WebSocket(`${protocol}//${window.location.host}/ws/chat/${roomId}/`);
 
-            const userId = "{{ user_id }}";
-            const userNameSession = "{{ user_name }}";
+                        chatSocket.onopen = () => {
+                            console.log("WebSocket connection established.");
+                        };
 
-            const messageInput = conversation.querySelector('.conversation-form-input');
-            const sendButton = conversation.querySelector('.conversation-form-submit');
-            sendButton.onclick = () => {
-                const message = messageInput.value;
-                chatSocket.send(JSON.stringify({
-                    'message': message,
-                    'room_id': currentRoomId,
-                    'sender': userNameSession,
-                    'user_id': userId
-                }));
-                messageInput.value = '';
-            };
+                        chatSocket.onmessage = (e) => {
+                            const data = JSON.parse(e.data);
+                            const decryptedMessage = caesarDecrypt(data.message, caesarShift);
+                            const isSender = data.sender === "{{ user_name }}";
+                            displayMessage(roomId, decryptedMessage, isSender, data.timestamp);
+                        };
 
-            fetch(`/chat/get_room_messages/${roomId}/`)
-            .then(response => response.json())
-            .then(data => {
-                const messagesList = conversation.querySelector('.conversation-wrapper');
-                messagesList.innerHTML = '';
-                data.messages.forEach(message => {
-                    const isSender = message.sender === userNameSession;
-                    displayMessage(roomId, message.content, isSender, message.timestamp);
-                });
-                scrollToBottom(messagesList);
-            })
-            .catch(error => console.error('Error fetching messages:', error));
-        } else {
-            console.error('Conversation not found:', roomId);
+                        chatSocket.onclose = (e) => {
+                            console.error("Chat socket closed unexpectedly", e);
+                        };
+
+                        chatSocket.onerror = (e) => {
+                            console.error("WebSocket error:", e);
+                        };
+
+                        const userId = "{{ user_id }}";
+                        const userNameSession = "{{ user_name }}";
+
+                        const messageInput = conversation.querySelector('.conversation-form-input');
+                        const sendButton = conversation.querySelector('.conversation-form-submit');
+                        sendButton.onclick = () => {
+                            const message = messageInput.value;
+                            const encryptedMessage = caesarEncrypt(message, caesarShift);
+                            chatSocket.send(JSON.stringify({
+                                'message': encryptedMessage,
+                                'room_id': currentRoomId,
+                                'sender': userNameSession,
+                                'user_id': userId
+                            }));
+                            messageInput.value = '';
+                        };
+
+                        fetch(`/chat/get_room_messages/${roomId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const messagesList = conversation.querySelector('.conversation-wrapper');
+                                messagesList.innerHTML = '';
+                                data.messages.forEach(message => {
+                                    const decryptedMessage = caesarDecrypt(message.content, caesarShift);
+                                    const isSender = message.sender === userNameSession;
+                                    displayMessage(roomId, decryptedMessage, isSender, message.timestamp);
+                                });
+                                scrollToBottom(messagesList);
+                            })
+                            .catch(error => console.error('Error fetching messages:', error));
+                    })
+                    .catch(error => console.error('Error fetching chat room details:', error));
+            } else {
+                console.error('Conversation not found:', roomId);
+            }
         }
-    }
 
-    function displayMessage(roomId, message, isSender, timestamp) {
-        const conversationWrapper = document.querySelector(`#conversation .conversation-wrapper`);
-        if (!conversationWrapper) {
-            console.error('Conversation wrapper not found for room:', roomId);
-            return;
-        }
+        function displayMessage(roomId, message, isSender, timestamp) {
+            const conversationWrapper = document.querySelector(`#conversation .conversation-wrapper`);
+            if (!conversationWrapper) {
+                console.error('Conversation wrapper not found for room:', roomId);
+                return;
+            }
 
-        const messageItem = document.createElement('li');
-        messageItem.classList.add('conversation-item');
-        if (isSender) {
-            messageItem.classList.add('me');
-        } else {
-            messageItem.classList.add('other');
-        }
+            const messageItem = document.createElement('li');
+            messageItem.classList.add('conversation-item');
+            if (isSender) {
+                messageItem.classList.add('me');
+            } else {
+                messageItem.classList.add('other');
+            }
 
-        const userImage = '/static/images/df.jpg';
+            const userImage = '/static/images/df.jpg';
 
-        messageItem.innerHTML = `
+            messageItem.innerHTML = `
             <div class="conversation-item-side">
                 <img class="conversation-item-image" src="${userImage}" alt="">
             </div>
@@ -332,14 +327,31 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        conversationWrapper.appendChild(messageItem);
-        scrollToBottom(conversationWrapper);
-    }
+            conversationWrapper.appendChild(messageItem);
+            scrollToBottom(conversationWrapper);
+        }
 
-    function scrollToBottom(element) {
-        element.scrollTop = element.scrollHeight;
-    }
-});
+        function scrollToBottom(element) {
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function caesarEncrypt(text, shift) {
+            return text.split('').map(char => {
+                if (char >= 'A' && char <= 'Z') {
+                    return String.fromCharCode(((char.charCodeAt(0) - 65 + shift) % 26 + 26) % 26 + 65);
+                } else if (char >= 'a' && char <= 'z') {
+                    return String.fromCharCode(((char.charCodeAt(0) - 97 + shift) % 26 + 26) % 26 + 97);
+                } else {
+                    return char;
+                }
+            }).join('');
+        }
+
+        function caesarDecrypt(text, shift) {
+            return caesarEncrypt(text, -shift);
+        }
+    });
 </script>
+
 </body>
 </html>
