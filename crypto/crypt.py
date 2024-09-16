@@ -3,7 +3,6 @@ import rsa
 
 # Get the current working directory of the script
 cwd = os.path.dirname(os.path.abspath(__file__))
-pubKey, privKey = load_keys()
 
 
 def generate_keys():
@@ -17,18 +16,14 @@ def generate_keys():
     Raises:
         FileNotFoundError: If the 'keys' directory does not exist.
     """
-    # Generate a new RSA key pair (public key and private key)
     (pubKey, privKey) = rsa.newkeys(2048)
 
-    # Ensure the 'keys' directory exists; create it if it doesn't
     keys_dir = os.path.join(cwd, 'keys')
     os.makedirs(keys_dir, exist_ok=True)
 
-    # Save the public key to a file
     with open(f'{keys_dir}/pubkey.pem', 'wb') as f:
         f.write(pubKey.save_pkcs1('PEM'))
 
-    # Save the private key to a file
     with open(f'{keys_dir}/privkey.pem', 'wb') as f:
         f.write(privKey.save_pkcs1('PEM'))
 
@@ -53,9 +48,43 @@ def load_keys():
     with open(f'{cwd}/keys/pubkey.pem', 'rb') as f:
         pubKey = rsa.PublicKey.load_pkcs1(f.read())
 
-    # Load the private key from 'privkey.pem'
     with open(f'{cwd}/keys/privkey.pem', 'rb') as f:
         privKey = rsa.PrivateKey.load_pkcs1(f.read())
 
-    # Return the loaded keys
     return pubKey, privKey
+
+
+pubKey, privKey = load_keys()
+
+
+def encrypt_rsa(msg, key):
+    """
+    Encrypts a message using the RSA encryption algorithm.
+
+    Args:
+        msg (str): The plaintext message to be encrypted.
+        key (rsa.PublicKey): The RSA public key used for encryption.
+
+    Returns:
+        bytes: The encrypted message in bytes.
+    """
+    return rsa.encrypt(msg.encode('utf-8'), key)
+
+
+def decrypt_rsa(ciphertext, key):
+    """
+    Decrypts an RSA-encrypted message.
+
+    Args:
+        ciphertext (bytes): The encrypted message in bytes.
+        key (rsa.PrivateKey): The RSA private key used for decryption.
+
+    Returns:
+        str: The decrypted plaintext message if decryption is successful.
+        bool: False if decryption fails.
+    """
+    try:
+        return rsa.decrypt(ciphertext, key).decode('utf-8')
+    except:
+        return False
+
