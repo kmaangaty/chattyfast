@@ -18,22 +18,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         - Adds the user to the channel group for broadcasting messages.
         - Accepts the WebSocket connection.
         """
-        # Extract room name from the URL route
 
         self.room_name = self.scope['url_route']['kwargs']['room_name']
 
-        # Create a group name for the chat room
-
         self.room_group_name = f'chat_{self.room_name}'
-
-        # Add the current channel (user) to the chat room group
 
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
 
-        # Accept the WebSocket connection
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -45,14 +39,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Args:
             close_code (int): The WebSocket close code indicating why the connection was closed.
         """
-        # Remove the current channel from the chat room group
         await self.channel_layer.group_discard(
-            self.room_group_name,  # The group name for the chat room
-            self.channel_name  # The specific WebSocket connection/channel
+            self.room_group_name,
+            self.channel_name
         )
 
     async def receive(self, text_data):
-        print(text_data)
         """
         Handles receiving messages via WebSocket.
 
@@ -66,26 +58,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Args:
             text_data (str): The JSON-formatted message received from the WebSocket client.
         """
-        # Parse the JSON data from the WebSocket message
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']  # Extract the message content
-        room_id = text_data_json['room_id']  # Extract the room ID
-        sender = text_data_json['sender']    # Extract the sender's username
+        message = text_data_json['message']
+        room_id = text_data_json['room_id']
+        sender = text_data_json['sender']
 
-        # Retrieve the chat room object asynchronously using its ID
         room = await self.get_room(room_id)
-
-        # Save the message to the database (message storage logic needs to be implemented in save_message)
         await self.save_message(room, sender, message)
-
-        # Broadcast the message to all members of the chat room group
         await self.channel_layer.group_send(
-            self.room_group_name,  # The name of the group for the chat room
+            self.room_group_name,
             {
-                'type': 'chat_message',  # Event type for handling the chat message
-                'message': message,      # The content of the message
-                'sender': sender,        # The sender's username
-                'timestamp': str(datetime.now())  # Timestamp of when the message was sent
+                'type': 'chat_message',
+                'message': message,
+                'sender': sender,
+                'timestamp': str(datetime.now())
             }
         )
 
@@ -102,16 +88,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 - 'sender': The username of the sender.
                 - 'timestamp': The time the message was sent.
         """
-        # Extract the message content, sender, and timestamp from the event
-        message = event['message']     # The message content to be sent
-        sender = event['sender']       # The username of the sender
-        timestamp = event['timestamp'] # The time when the message was sent
 
-        # Send the message to the WebSocket client in JSON format
+        message = event['message']
+        sender = event['sender']
+        timestamp = event['timestamp']
+
         await self.send(text_data=json.dumps({
-            'message': message,       # Include the message in the response
-            'sender': sender,         # Include the sender's username
-            'timestamp': timestamp    # Include the message's timestamp
+            'message': message,
+            'sender': sender,
+            'timestamp': timestamp
         }))
 
     @database_sync_to_async
@@ -131,7 +116,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Raises:
             ChatRoom.DoesNotExist: If no chat room with the provided ID is found.
         """
-        # Query the database for the chat room with the given ID
         return ChatRoom.objects.get(id=room_id)
 
     @database_sync_to_async
@@ -152,13 +136,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         from django.core.exceptions import ObjectDoesNotExist
 
-        # Attempt to retrieve the user by their username
         try:
             user = User.objects.get(user_name=sender)
         except ObjectDoesNotExist:
-            # If the user does not exist, return without saving the message
             return
 
-        # Create a new message instance and save it to the database
         new_message = Message(room=room, sender=user, text=crypto.crypt.encrypt(message))
         new_message.save()
