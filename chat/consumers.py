@@ -3,6 +3,8 @@ from datetime import datetime
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+
+import crypto.crypt
 from .models import Message, ChatRoom, User
 
 
@@ -157,5 +159,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # Create a new message instance and save it to the database
-        new_message = Message(room=room, sender=user, text=message)
+        new_message = Message(room=room, sender=user, text=crypto.crypt.encrypt(message))
         new_message.save()

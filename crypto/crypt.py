@@ -28,6 +28,7 @@ def generate_keys():
     with open(f'{keys_dir}/privkey.pem', 'wb') as f:
         f.write(privKey.save_pkcs1('PEM'))
 
+
 def load_keys():
     """
     Loads the RSA public and private keys from the 'keys' directory.

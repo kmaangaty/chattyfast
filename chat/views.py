@@ -72,38 +72,30 @@ def login(request):
         HttpResponse: The response object that either redirects or renders a page.
     """
     if request.method == 'POST':
-        # Retrieve user inputs
         user_name = request.POST.get('user_name')
         password = request.POST.get('password')
         method = request.POST.get('method')
 
-        # Check if the user exists in the database
         try:
             user_data = User.objects.get(user_name=user_name)
             user_exist = True
         except User.DoesNotExist:
             user_exist = False
 
-        # Generate a new token
         token = create_token()
 
         if method == 'log':
-            # Attempt to log in the user
             if user_exist and password == user_data.password:
-                # Successful login: Set session token and update user token
                 request.session['token'] = [token]
                 user_data.token = token
                 user_data.save()
                 return redirect('/')
             else:
-                # Invalid login credentials: Render login page with error
                 return render(request, 'login.html', {'error': 'Invalid login credentials'})
 
         elif method == 'reg':
-            # Attempt to register a new user
             if not user_exist:
                 email = request.POST.get('email')
-                # Create new user with generated token
                 request.session['token'] = [create_token()]
                 User.objects.create(
                     UID=create_token(),
@@ -114,10 +106,8 @@ def login(request):
                 )
                 return redirect('/')
             else:
-                # User already exists: Render login page with error
                 return render(request, 'login.html', {'error': 'User already exists'})
 
-    # If request method is not POST, render the login page
     return render(request, 'login.html')
 
 
@@ -142,10 +132,8 @@ def get_user_chat_rooms(request):
     Returns:
         JsonResponse: A JSON response containing the list of chat rooms with their details.
     """
-    # Retrieve the user from the database based on the session token
     user = User.objects.get(token=request.session['token'][0])
 
-    # Query to find chat rooms where the user is either user1 or user2
     chat_rooms = ChatRoom.objects.filter(
         Q(user1=user.user_name) | Q(user2=user.user_name)
     ).prefetch_related('message_set').distinct()
@@ -184,11 +172,9 @@ def get_or_create_room(user1, user2):
     if not (isinstance(user1, User) and isinstance(user2, User)):
         raise TypeError("Expected instances of User")
 
-    # Ensure users have valid IDs
     if user1.id is None or user2.id is None:
         raise ValueError("One or both users have invalid IDs")
 
-    # Ensure user1 is always less than or equal to user2 by ID for consistent room creation
     chat_room, created = ChatRoom.objects.get_or_create(
         user1=min(user1, user2, key=lambda u: u.id),
         user2=max(user1, user2, key=lambda u: u.id)
@@ -239,38 +225,31 @@ def search_user(request):
     Returns:
         JsonResponse: A JSON response indicating success or failure, including user and chat room details if successful.
     """
-    # Check if the request is an AJAX POST request
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = UserSearchForm(request.POST)
 
-        # Validate the form data
         if form.is_valid():
             username = form.cleaned_data['username']
 
             try:
-                # Retrieve the user with the given username
                 user = User.objects.get(user_name=username)
                 my_user = User.objects.get(token=request.session['token'][0])
 
-                # Check if a chat room exists between the current user and the found user
                 chat_room = ChatRoom.objects.filter(
                     (Q(user1=my_user.user_name) & Q(user2=user.user_name)) |
                     (Q(user1=user.user_name) & Q(user2=my_user.user_name))
                 ).first()
 
-                # If no chat room exists, create one
                 if not chat_room:
                     chat_room = ChatRoom.objects.create(
                         user1=my_user.user_name,
                         user2=user.user_name
                     )
 
-                # Retrieve the last message in the chat room
                 last_message = Message.objects.filter(room=chat_room).last()
                 last_message_text = decrypt(last_message.text) if last_message else ''
                 last_message_time = last_message.timestamp.strftime('%H:%M') if last_message else ''
 
-                # Prepare user and chat room data
                 user_data = {
                     'id': user.id,
                     'name': user.name,
@@ -287,21 +266,17 @@ def search_user(request):
                     'last_message_time': last_message_time
                 }]
 
-                # Return success response with user and chat room data
                 return JsonResponse({
                     'success': True,
                     'user': user_data,
                     'chat_rooms': chat_room_data
                 })
             except User.DoesNotExist:
-                # Handle case where user does not exist
                 return JsonResponse({'success': False, 'error': f'{username} does not exist'})
             except Exception as e:
-                # Log unexpected errors and return error response
                 logging.error(f'Error in search_user: {e}')
                 return JsonResponse({'success': False, 'error': 'An unexpected error occurred'})
 
-    # Handle invalid requests
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 
@@ -330,5 +305,4 @@ def get_room_messages(request, room_id):
             'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         } for message in messages]
 
-        # Return the messages in a JSON response
         return JsonResponse({'messages': message_list})
