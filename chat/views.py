@@ -96,13 +96,16 @@ def login(request):
             if not user_exist:
                 email = request.POST.get('email')
                 request.session['token'] = [create_token()]
-                User.objects.create(
+                user_data = User.objects.create(
                     UID=create_token(),
                     user_name=user_name,
                     password=password,
                     email=email,
                     token=token
                 )
+                request.session['token'] = [token]
+                user_data.token = token
+                user_data.save()
                 return redirect('/')
             else:
                 return render(request, 'login.html', {'error': 'User already exists'})
